@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=64.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -13,11 +13,23 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
 ]
 dependencies = [
-    "fschat", "torch", "transformers>=4.34", "accelerate", "sentencepiece", "protobuf"
+    "fschat",
+    "torch",
+    "transformers>=4.34",
+    "accelerate",
+    "sentencepiece",
+    "protobuf",
+    "notebook>=7.4.5",
+    "matplotlib>=3.9.4",
+    "flash-attn>=2.8.3",
 ]
 
 [project.optional-dependencies]
 train = ["bitsandbytes", "wandb", "scipy"]
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
 
 [project.urls]
 "Homepage" = "https://github.com/FasterDecoding/Medusa"
