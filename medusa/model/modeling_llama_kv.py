@@ -22,14 +22,14 @@ from transformers.pytorch_utils import ALL_LAYERNORM_LAYERS
 from transformers.utils import (
     add_start_docstrings,
     add_start_docstrings_to_model_forward,
-    is_flash_attn_available,
+    is_flash_attn_2_available,
     logging,
     replace_return_docstrings,
 )
 from transformers.models.llama.configuration_llama import LlamaConfig
 
 
-if is_flash_attn_available():
+if is_flash_attn_2_available():
     from flash_attn import flash_attn_func, flash_attn_varlen_func
     from flash_attn.bert_padding import index_first_axis, pad_input, unpad_input  # noqa
 
@@ -861,8 +861,8 @@ class LlamaModel(LlamaPreTrainedModel):
         past_key_values_length = 0
 
         if past_key_values is not None:
-            past_key_values_length = past_key_values[0][0].shape[2]
-            seq_length_with_past = seq_length_with_past + past_key_values_length
+            past_key_values_length = past_key_values[0][0].shape[2]  # [1,32,0,128].shape[2]=0
+            seq_length_with_past = seq_length_with_past + past_key_values_length  # 0+0=0
 
         if position_ids is None:
             device = input_ids.device if input_ids is not None else inputs_embeds.device
@@ -874,7 +874,7 @@ class LlamaModel(LlamaPreTrainedModel):
             position_ids = position_ids.view(-1, seq_length).long()
 
         if inputs_embeds is None:
-            inputs_embeds = self.embed_tokens(input_ids)
+            inputs_embeds = self.embed_tokens(input_ids) # input_id [batch_size,seq_len]=[1,66], inputs_embeds [batch_size,seq_len,hidden_size]=[1,66,4096]
         # embed positions
         if attention_mask is None:
             attention_mask = torch.ones(
@@ -891,10 +891,10 @@ class LlamaModel(LlamaPreTrainedModel):
             attention_mask, (batch_size, seq_length), inputs_embeds, past_key_values_length
         )
         # [MODIFIED] 
-        self.attention_mask = attention_mask
-        self.position_ids = position_ids
+        self.attention_mask = attention_mask  #[1,1,66,66]
+        self.position_ids = position_ids  #[1,66]
 
-        hidden_states = inputs_embeds
+        hidden_states = inputs_embeds # [1,66,4096]
 
         if self.gradient_checkpointing and self.training:
             if use_cache:
@@ -935,7 +935,7 @@ class LlamaModel(LlamaPreTrainedModel):
                     output_attentions=output_attentions,
                     use_cache=use_cache,
                     padding_mask=padding_mask,
-                )
+                ) # layer_outputs[0]: [1,66,4096],layer_outputs is tuple
 
             hidden_states = layer_outputs[0]
 
