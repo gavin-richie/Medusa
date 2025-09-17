@@ -140,7 +140,11 @@ class MedusaModelABC(nn.Module):
         except:
             config = MedusaConfig.from_pretrained(pretrained_model_name_or_path)
             base_model_config = AutoConfig.from_pretrained(config.base_model_name_or_path)
-            base_model_config.medusa_num_heads = 5 # TODO: fix the uploaded config (only include 2 heads)
+            medusa_num_heads = kwargs.pop('medusa_num_heads', None)
+            if medusa_num_heads is not None:
+                base_model_config.medusa_num_heads = medusa_num_heads
+            else:
+                base_model_config.medusa_num_heads = 5
             base_model_config.medusa_num_layers = config.medusa_num_layers
             model = super().from_pretrained(
                 config.base_model_name_or_path,
@@ -384,13 +388,25 @@ class MedusaModel():
         *args,
         **kwargs,
     ):
+        # 提取可能存在的 medusa_num_heads 参数并从 kwargs 中移除
+        # medusa_num_heads = kwargs.pop('medusa_num_heads', None)
         # Manually load config to ensure that the medusa_num_heads parameter is loaded
         try:
             config = AutoConfig.from_pretrained(pretrained_model_name_or_path)
+            # if medusa_num_heads is not None:
+            #     config.medusa_num_heads = medusa_num_heads
+
         except:
             # MEDUSA-v0.1 load
-            config = MedusaConfig.from_pretrained(pretrained_model_name_or_path)
+            config = MedusaConfig.from_pretrained(pretrained_model_name_or_path) # load medusa v2 v1.5
             base_model_config = AutoConfig.from_pretrained(config.base_model_name_or_path)
+            # 如果用户提供了 medusa_num_heads，则更新配置
+            # if medusa_num_heads is not None:
+            #     config.medusa_num_heads = medusa_num_heads
+            # if medusa_num_layers is not None:
+            #     config.medusa_num_layers = medusa_num_layers
+            # base_model_config.medusa_num_heads = config.medusa_num_heads
+            # base_model_config.medusa_num_layers = config.medusa_num_layers
             config.model_type = base_model_config.model_type
 
         if config.model_type == "llama":
